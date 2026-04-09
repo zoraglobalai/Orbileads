@@ -12,7 +12,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True)
-    mobile_number = models.CharField(max_length=20, unique=True)
+    mobile_number = models.CharField(max_length=20)
     country = models.CharField(max_length=100)
     company_name = models.CharField(max_length=150, blank=True)
     accepted_terms = models.BooleanField(default=False)

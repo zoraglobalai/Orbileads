@@ -93,3 +93,57 @@ def invalidate_user_tokens(user):
 
 def log_password_reset_request(email):
     logger.info('Password reset requested for email=%s', email)
+
+
+def verify_google_id_token(token):
+    client_id = getattr(settings, 'GOOGLE_CLIENT_ID', '')
+    if not client_id:
+        raise AuthenticationFailed('Google sign-in is not configured.')
+
+    try:
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token
+    except ImportError as exc:
+        raise AuthenticationFailed('Google sign-in dependencies are not installed.') from exc
+
+    try:
+        payload = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+    except ValueError as exc:
+        raise AuthenticationFailed('Invalid Google credential.') from exc
+
+    if payload.get('iss') not in {'accounts.google.com', 'https://accounts.google.com'}:
+        raise AuthenticationFailed('Invalid Google issuer.')
+
+    if not payload.get('email_verified'):
+        raise AuthenticationFailed('Google email is not verified.')
+
+    return payload
+
+
+def authenticate_google_user(credential):
+    payload = verify_google_id_token(credential)
+    email = User.objects.normalize_email(payload['email']).lower().strip()
+    user = User.objects.filter(email=email).first()
+
+    if user is None:
+        full_name = (payload.get('name') or email.split('@')[0]).strip()
+        user = User(
+            email=email,
+            full_name=full_name,
+            mobile_number='',
+            country='',
+            company_name='',
+            accepted_terms=True,
+            accepted_terms_at=timezone.now(),
+            is_active=True,
+        )
+        user.set_unusable_password()
+        user.save()
+
+    if not user.is_active:
+        raise AuthenticationFailed('User account is inactive.')
+
+    reset_failed_login_state(user)
+    user.last_login = timezone.now()
+    user.save(update_fields=['last_login'])
+    return user

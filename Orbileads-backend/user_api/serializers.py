@@ -5,7 +5,13 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from .services import authenticate_user, get_tokens_for_user, invalidate_user_tokens, log_password_reset_request
+from .services import (
+    authenticate_google_user,
+    authenticate_user,
+    get_tokens_for_user,
+    invalidate_user_tokens,
+    log_password_reset_request,
+)
 from .validators import (
     normalize_company_name,
     normalize_country,
@@ -38,6 +44,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    mobile_number = serializers.CharField(required=False, allow_blank=True, default='')
     password = serializers.CharField(write_only=True, trim_whitespace=False, style={'input_type': 'password'})
     confirm_password = serializers.CharField(
         write_only=True, trim_whitespace=False, style={'input_type': 'password'}
@@ -67,10 +74,9 @@ class SignupSerializer(serializers.ModelSerializer):
         return normalized
 
     def validate_mobile_number(self, value):
-        normalized = validate_mobile_number(value)
-        if User.objects.filter(mobile_number=normalized).exists():
-            raise serializers.ValidationError('A user with this mobile number already exists.')
-        return normalized
+        if not value.strip():
+            return ''
+        return validate_mobile_number(value)
 
     def validate_country(self, value):
         return validate_country(value)
@@ -124,6 +130,22 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = authenticate_user(attrs['email'], attrs['password'])
+        attrs['user'] = user
+        attrs['tokens'] = get_tokens_for_user(user)
+        return attrs
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    credential = serializers.CharField(write_only=True, trim_whitespace=True)
+
+    def validate_credential(self, value):
+        token = value.strip()
+        if not token:
+            raise serializers.ValidationError('Google credential is required.')
+        return token
+
+    def validate(self, attrs):
+        user = authenticate_google_user(attrs['credential'])
         attrs['user'] = user
         attrs['tokens'] = get_tokens_for_user(user)
         return attrs
@@ -195,11 +217,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         return validate_full_name(value)
 
     def validate_mobile_number(self, value):
-        normalized = validate_mobile_number(value)
-        query = User.objects.filter(mobile_number=normalized).exclude(pk=self.instance.pk)
-        if query.exists():
-            raise serializers.ValidationError('A user with this mobile number already exists.')
-        return normalized
+        return validate_mobile_number(value)
 
     def validate_country(self, value):
         return validate_country(value)

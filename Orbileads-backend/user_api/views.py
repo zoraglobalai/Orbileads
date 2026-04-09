@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from .serializers import (
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
+    GoogleAuthSerializer,
     LoginSerializer,
     LogoutSerializer,
     ResetPasswordSerializer,
@@ -50,6 +51,24 @@ class LoginView(APIView):
         return build_response(
             success=True,
             message='Login successful.',
+            data={
+                'user': UserProfileSerializer(user).data,
+                'tokens': serializer.validated_data['tokens'],
+            },
+        )
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        return build_response(
+            success=True,
+            message='Google authentication successful.',
             data={
                 'user': UserProfileSerializer(user).data,
                 'tokens': serializer.validated_data['tokens'],

@@ -2,11 +2,24 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(os.path.join(BASE_DIR, '.env'))
+env_file = BASE_DIR / '.env'
+if load_dotenv is not None:
+    load_dotenv(env_file)
+elif env_file.exists():
+    # Fallback so local development still works if python-dotenv is not installed.
+    for line in env_file.read_text(encoding='utf-8').splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#') or '=' not in stripped:
+            continue
+        key, value = stripped.split('=', 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
@@ -80,9 +93,6 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
     {
@@ -119,6 +129,7 @@ CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -88,3 +90,22 @@ class UserAuthAPITests(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.token_version, 1)
+
+    @patch('user_api.services.verify_google_id_token')
+    def test_google_auth_creates_user_and_returns_tokens(self, mock_verify_google_id_token):
+        mock_verify_google_id_token.return_value = {
+            'email': 'googleuser@example.com',
+            'email_verified': True,
+            'name': 'Google User',
+            'iss': 'https://accounts.google.com',
+        }
+
+        response = self.client.post(
+            reverse('user-google-auth'),
+            {'credential': 'fake-google-token'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(User.objects.filter(email='googleuser@example.com').exists())
+        self.assertIn('access', response.data['data']['tokens'])
