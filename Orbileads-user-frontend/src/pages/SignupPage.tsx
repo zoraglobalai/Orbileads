@@ -392,7 +392,7 @@ function SignupPage() {
   ]
 
   return (
-    <main className="min-h-[calc(100vh-88px)] bg-[linear-gradient(180deg,#f7fbff_0%,#eef5fb_100%)]">
+    <main className="min-h-[calc(100vh-88px)] bg-[radial-gradient(circle_at_top,#eef3f8_0%,#dde5ee_58%,#d2dbe6_100%)]">
       <div className="mx-auto flex min-h-[calc(100vh-88px)] w-full max-w-7xl items-center justify-center px-4 py-4 sm:px-6 lg:px-8">
         <section className="flex w-full max-w-[620px] items-center justify-center rounded-[32px] bg-white px-6 py-8 shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 lg:px-12">
           <div className="w-full max-w-[352px] space-y-6">

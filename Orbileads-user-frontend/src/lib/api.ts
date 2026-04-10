@@ -29,6 +29,17 @@ export type LoginPayload = {
   password: string
 }
 
+export type ForgotPasswordPayload = {
+  email: string
+}
+
+export type ResetPasswordPayload = {
+  uid: string
+  token: string
+  new_password: string
+  confirm_new_password: string
+}
+
 type LoginResponse = {
   user: AuthUser
   tokens: AuthTokens
@@ -108,6 +119,24 @@ export async function authenticateWithGoogle(credential: string) {
   const response = await request<LoginResponse>('/google-auth/', {
     method: 'POST',
     body: JSON.stringify({ credential }),
+  })
+
+  return response
+}
+
+export async function requestPasswordResetLink(payload: ForgotPasswordPayload) {
+  const response = await request<null>('/forgot-password/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  return response
+}
+
+export async function resetPassword(payload: ResetPasswordPayload) {
+  const response = await request<null>('/reset-password/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   })
 
   return response

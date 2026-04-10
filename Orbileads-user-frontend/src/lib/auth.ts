@@ -21,29 +21,15 @@ export type AuthSession = {
   tokens: AuthTokens
 }
 
-const AUTH_STORAGE_KEY = 'orbileads-user-auth'
 const AUTH_CHANGE_EVENT = 'orbileads-auth-change'
+let currentAuthSession: AuthSession | null = null
 
 function isBrowser() {
   return typeof window !== 'undefined'
 }
 
 export function readAuthSession(): AuthSession | null {
-  if (!isBrowser()) {
-    return null
-  }
-
-  const rawValue = window.localStorage.getItem(AUTH_STORAGE_KEY)
-  if (!rawValue) {
-    return null
-  }
-
-  try {
-    return JSON.parse(rawValue) as AuthSession
-  } catch {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY)
-    return null
-  }
+  return currentAuthSession
 }
 
 export function saveAuthSession(session: AuthSession) {
@@ -51,7 +37,7 @@ export function saveAuthSession(session: AuthSession) {
     return
   }
 
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session))
+  currentAuthSession = session
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT))
 }
 
@@ -60,7 +46,7 @@ export function clearAuthSession() {
     return
   }
 
-  window.localStorage.removeItem(AUTH_STORAGE_KEY)
+  currentAuthSession = null
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT))
 }
 
@@ -72,4 +58,3 @@ export function subscribeToAuthChanges(callback: () => void) {
   window.addEventListener(AUTH_CHANGE_EVENT, callback)
   return () => window.removeEventListener(AUTH_CHANGE_EVENT, callback)
 }
-

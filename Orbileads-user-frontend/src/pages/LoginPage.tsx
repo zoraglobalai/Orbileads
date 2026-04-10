@@ -46,7 +46,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (readAuthSession()) {
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     }
   }, [navigate])
 
@@ -100,7 +100,7 @@ function LoginPage() {
       }
 
       saveAuthSession(buildSession(response.data.user, response.data.tokens))
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         const nextErrors: LoginErrors = {}
@@ -143,7 +143,7 @@ function LoginPage() {
       }
 
       saveAuthSession(buildSession(response.data.user, response.data.tokens))
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (error) {
       setSubmitError(
         getApiErrorMessage(error, 'Unable to continue with Google right now. Please try again.'),
@@ -154,9 +154,10 @@ function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-88px)] w-full max-w-7xl items-center px-4 py-4 sm:px-6 lg:px-8">
-      <section className="w-full rounded-[32px] border border-[var(--color-border)] bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] lg:p-8">
-        <article className="mx-auto w-full max-w-md space-y-5">
+    <main className="min-h-[calc(100vh-88px)] bg-[radial-gradient(circle_at_top,#eef3f8_0%,#dde5ee_58%,#d2dbe6_100%)]">
+      <div className="mx-auto flex min-h-[calc(100vh-88px)] w-full max-w-7xl items-center justify-center px-4 py-4 sm:px-6 lg:px-8">
+        <section className="flex w-full max-w-[620px] items-center justify-center rounded-[32px] border border-slate-200 bg-white px-6 py-8 shadow-[0_28px_60px_rgba(148,163,184,0.18)] sm:px-10 lg:px-12">
+          <article className="w-full max-w-[448px] space-y-5">
           <header className="space-y-3">
           
             <h1 className="text-4xl font-semibold tracking-tight text-slate-950">
@@ -262,7 +263,7 @@ function LoginPage() {
 
                 <p className="flex justify-end">
                   <Link
-                    to="/reset-password"
+                    to={`/reset-password?email=${encodeURIComponent(form.email.trim())}`}
                     className="text-sm font-medium !text-[#1679bd] hover:!text-[#115f95]"
                   >
                     Forgot Password?
@@ -303,8 +304,9 @@ function LoginPage() {
               Sign up
             </Link>
           </p>
-        </article>
-      </section>
+          </article>
+        </section>
+      </div>
     </main>
   )
 }

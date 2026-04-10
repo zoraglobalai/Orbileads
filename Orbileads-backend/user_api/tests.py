@@ -1,7 +1,11 @@
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.core import mail
 from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -90,6 +94,36 @@ class UserAuthAPITests(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.token_version, 1)
+
+    def test_forgot_password_sends_reset_email(self):
+        response = self.client.post(
+            reverse('user-forgot-password'),
+            {'email': self.user.email},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('/reset-password/', mail.outbox[0].body)
+
+    def test_reset_password_with_uid_and_token(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        response = self.client.post(
+            reverse('user-reset-password'),
+            {
+                'uid': uid,
+                'token': token,
+                'new_password': 'UpdatedPassword123!',
+                'confirm_new_password': 'UpdatedPassword123!',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('UpdatedPassword123!'))
 
     @patch('user_api.services.verify_google_id_token')
     def test_google_auth_creates_user_and_returns_tokens(self, mock_verify_google_id_token):

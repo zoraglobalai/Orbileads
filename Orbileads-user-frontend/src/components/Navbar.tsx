@@ -14,7 +14,7 @@ function Navbar() {
     setIsLoggingOut(true)
     try {
       await logoutUser()
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     } finally {
       setIsLoggingOut(false)
     }

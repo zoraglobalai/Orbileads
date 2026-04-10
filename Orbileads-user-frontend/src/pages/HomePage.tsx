@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
-import { readAuthSession, subscribeToAuthChanges, type AuthSession } from '../lib/auth'
+import { Navigate } from 'react-router-dom'
+import { readAuthSession } from '../lib/auth'
 
 function HomePage() {
-  const [session, setSession] = useState<AuthSession | null>(() => readAuthSession())
+  const session = readAuthSession()
 
-  useEffect(() => subscribeToAuthChanges(() => setSession(readAuthSession())), [])
+  if (session) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-88px)] w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
@@ -14,12 +16,11 @@ function HomePage() {
             Orbileads
           </span>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-            {session ? `Welcome, ${session.user.full_name}` : 'Home page placeholder'}
+            Home page placeholder
           </h1>
           <p className="text-base leading-7 text-slate-500">
-            {session
-              ? `Your account is connected successfully with ${session.user.email}. You can now continue building the user-side experience on top of this authenticated flow.`
-              : 'This space is intentionally left open for your future product content. The navigation is ready, responsive, and aligned with the authentication flow.'}
+            This space is intentionally left open for your future product content. The
+            navigation is ready, responsive, and aligned with the authentication flow.
           </p>
         </div>
       </section>

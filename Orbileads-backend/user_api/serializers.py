@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from .services import (
     authenticate_google_user,
     authenticate_user,
+    get_user_from_reset_credentials,
     get_tokens_for_user,
     invalidate_user_tokens,
     log_password_reset_request,
@@ -164,48 +165,44 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 
 class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    uid = serializers.CharField()
+    token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, trim_whitespace=False, style={'input_type': 'password'})
     confirm_new_password = serializers.CharField(
         write_only=True, trim_whitespace=False, style={'input_type': 'password'}
     )
 
-    def validate_email(self, value):
-        return User.objects.normalize_email(value).lower().strip()
-
     def validate(self, attrs):
         if attrs['new_password'] != attrs['confirm_new_password']:
             raise serializers.ValidationError({'confirm_new_password': 'Passwords do not match.'})
 
-        user = User.objects.filter(email=attrs['email']).first()
-        if user is not None:
-            try:
-                password_validation.validate_password(attrs['new_password'], user)
-            except DjangoValidationError as exc:
-                raise serializers.ValidationError({'new_password': list(exc.messages)}) from exc
+        user = get_user_from_reset_credentials(attrs['uid'], attrs['token'])
+        try:
+            password_validation.validate_password(attrs['new_password'], user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'new_password': list(exc.messages)}) from exc
+        attrs['user'] = user
         return attrs
 
     @transaction.atomic
     def save(self, **kwargs):
-        email = self.validated_data['email']
-        user = User.objects.filter(email=email).first()
-        if user is not None:
-            user.set_password(self.validated_data['new_password'])
-            user.failed_login_attempts = 0
-            user.last_failed_login_at = None
-            user.account_locked_until = None
-            user.token_version += 1
-            user.save(
-                update_fields=[
-                    'password',
-                    'failed_login_attempts',
-                    'last_failed_login_at',
-                    'account_locked_until',
-                    'token_version',
-                    'updated_at',
-                ]
-            )
-        return {'email': email}
+        user = self.validated_data['user']
+        user.set_password(self.validated_data['new_password'])
+        user.failed_login_attempts = 0
+        user.last_failed_login_at = None
+        user.account_locked_until = None
+        user.token_version += 1
+        user.save(
+            update_fields=[
+                'password',
+                'failed_login_attempts',
+                'last_failed_login_at',
+                'account_locked_until',
+                'token_version',
+                'updated_at',
+            ]
+        )
+        return {'email': user.email}
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
