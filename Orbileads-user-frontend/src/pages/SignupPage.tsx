@@ -10,6 +10,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
 import {
+  checkEmailAvailability,
   authenticateWithGoogle,
   ApiError,
   buildSession,
@@ -66,6 +67,24 @@ const COUNTRIES = [
   'Qatar',
   'Sri Lanka',
 ]
+
+function getFirstErrorMessage(errors: Record<string, unknown> | undefined) {
+  if (!errors) {
+    return undefined
+  }
+
+  for (const value of Object.values(errors)) {
+    if (typeof value === 'string' && value.trim()) {
+      return value
+    }
+
+    if (Array.isArray(value) && value.length > 0) {
+      return String(value[0])
+    }
+  }
+
+  return undefined
+}
 
 function UserIcon() {
   return (
@@ -174,6 +193,7 @@ function SignupPage() {
   const [form, setForm] = useState<SignupFormState>(initialForm)
   const [errors, setErrors] = useState<SignupErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -274,12 +294,29 @@ function SignupPage() {
     return Object.keys(nextErrors).length === 0
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step === 'identity') {
       if (!validateIdentityStep()) {
         return
       }
-      setStep('password')
+
+      setIsCheckingEmail(true)
+      try {
+        await checkEmailAvailability({ email: form.email.trim() })
+        setStep('password')
+      } catch (error) {
+        if (error instanceof ApiError) {
+          const emailError = getFieldError(error.errors, 'email') ?? error.message
+          setErrors((current) => ({ ...current, email: emailError }))
+          setSubmitError('')
+        } else {
+          setSubmitError(
+            getApiErrorMessage(error, 'Unable to verify the email right now. Please try again.'),
+          )
+        }
+      } finally {
+        setIsCheckingEmail(false)
+      }
       return
     }
 
@@ -344,7 +381,11 @@ function SignupPage() {
           setErrors((current) => ({ ...current, ...nextErrors }))
         }
 
-        setSubmitError(getFieldError(error.errors, 'detail') ?? error.message)
+        setSubmitError(
+          getFieldError(error.errors, 'detail') ??
+            getFirstErrorMessage(error.errors) ??
+            error.message,
+        )
       } else {
         setSubmitError(
           getApiErrorMessage(error, 'Unable to create the account right now. Please try again.'),
@@ -624,17 +665,19 @@ function SignupPage() {
                 </>
               ) : null}
 
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                fullWidth
-                className="mt-2 h-11 rounded-xl bg-[#1f7ae0] text-base font-semibold shadow-none hover:bg-[#186dd0]"
-              >
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isCheckingEmail}
+                  fullWidth
+                  className="mt-2 h-11 rounded-xl bg-[#1f7ae0] text-base font-semibold shadow-none hover:bg-[#186dd0]"
+                >
                 {step === 'details'
                   ? isSubmitting
                     ? 'Creating Account...'
                     : 'Create Account'
-                  : 'Continue'}
+                  : isCheckingEmail
+                    ? 'Checking...'
+                    : 'Continue'}
               </Button>
 
               {step !== 'identity' ? (

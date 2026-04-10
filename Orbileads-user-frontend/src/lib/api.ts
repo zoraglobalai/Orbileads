@@ -13,6 +13,11 @@ type ApiEnvelope<T> = {
   errors?: Record<string, unknown>
 }
 
+type ApiErrorPayload = {
+  message: string
+  errors: Record<string, unknown>
+}
+
 export type SignupPayload = {
   full_name: string
   email: string
@@ -33,9 +38,19 @@ export type ForgotPasswordPayload = {
   email: string
 }
 
+export type CheckEmailPayload = {
+  email: string
+}
+
 export type ResetPasswordPayload = {
   uid: string
   token: string
+  new_password: string
+  confirm_new_password: string
+}
+
+export type ChangePasswordPayload = {
+  current_password?: string
   new_password: string
   confirm_new_password: string
 }
@@ -76,16 +91,38 @@ async function request<T>(path: string, options: RequestInit = {}) {
   })
 
   let payload: ApiEnvelope<T> | null = null
+  let apiErrorPayload: ApiErrorPayload | null = null
 
   try {
-    payload = (await response.json()) as ApiEnvelope<T>
+    const parsedPayload = (await response.json()) as ApiEnvelope<T> | Record<string, unknown>
+
+    if (
+      parsedPayload &&
+      typeof parsedPayload === 'object' &&
+      'success' in parsedPayload &&
+      'message' in parsedPayload
+    ) {
+      payload = parsedPayload as ApiEnvelope<T>
+    } else if (parsedPayload && typeof parsedPayload === 'object') {
+      const errors = parsedPayload as Record<string, unknown>
+      const firstErrorEntry = Object.values(errors)[0]
+      const message =
+        typeof firstErrorEntry === 'string'
+          ? firstErrorEntry
+          : Array.isArray(firstErrorEntry) && firstErrorEntry.length > 0
+            ? String(firstErrorEntry[0])
+            : 'Unable to complete the request.'
+
+      apiErrorPayload = { message, errors }
+    }
   } catch {
     payload = null
   }
 
-  if (!response.ok || !payload?.success) {
-    const message = payload?.message ?? 'Unable to complete the request.'
-    const errors = payload?.errors ?? {}
+  if (!response.ok || (!payload?.success && !apiErrorPayload)) {
+    const message =
+      apiErrorPayload?.message ?? payload?.message ?? 'Unable to complete the request.'
+    const errors = apiErrorPayload?.errors ?? payload?.errors ?? {}
 
     if (response.status === 401) {
       clearAuthSession()
@@ -99,6 +136,15 @@ async function request<T>(path: string, options: RequestInit = {}) {
 
 export async function signupUser(payload: SignupPayload) {
   const response = await request<AuthUser>('/signup/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  return response
+}
+
+export async function checkEmailAvailability(payload: CheckEmailPayload) {
+  const response = await request<null>('/check-email/', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
@@ -142,6 +188,15 @@ export async function resetPassword(payload: ResetPasswordPayload) {
   return response
 }
 
+export async function changePassword(payload: ChangePasswordPayload) {
+  const response = await request<null>('/change-password/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+  return response
+}
+
 export async function logoutUser() {
   const session = readAuthSession()
 
@@ -155,6 +210,10 @@ export async function logoutUser() {
       method: 'POST',
       body: JSON.stringify({ refresh_token: session.tokens.refresh }),
     })
+  } catch (error) {
+    if (!(error instanceof ApiError) || !session.tokens.refresh) {
+      throw error
+    }
   } finally {
     clearAuthSession()
   }
