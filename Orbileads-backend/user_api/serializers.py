@@ -288,10 +288,27 @@ class LogoutSerializer(serializers.Serializer):
             raise serializers.ValidationError('Refresh token is required.')
         return value.strip()
 
-    def save(self, **kwargs):
+    def validate(self, attrs):
+        request = self.context['request']
+
         try:
-            token = RefreshToken(self.validated_data['refresh_token'])
-            token.blacklist()
+            token = RefreshToken(attrs['refresh_token'])
         except TokenError as exc:
             raise serializers.ValidationError({'refresh_token': 'Invalid or expired refresh token.'}) from exc
+
+        token_user_id = str(token.get('user_id', ''))
+        request_user_id = str(request.user.pk)
+        token_version = token.get('token_version')
+
+        if token_user_id != request_user_id:
+            raise serializers.ValidationError({'refresh_token': 'Refresh token does not belong to the current user.'})
+
+        if token_version != request.user.token_version:
+            raise serializers.ValidationError({'refresh_token': 'Refresh token is no longer valid.'})
+
+        attrs['token'] = token
+        return attrs
+
+    def save(self, **kwargs):
+        self.validated_data['token'].blacklist()
         return {}

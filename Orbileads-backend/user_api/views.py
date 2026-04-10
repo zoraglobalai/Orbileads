@@ -155,7 +155,7 @@ class LogoutView(APIView):
     throttle_classes = [LogoutRateThrottle]
 
     def post(self, request, *args, **kwargs):
-        serializer = LogoutSerializer(data=request.data)
+        serializer = LogoutSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return build_response(
