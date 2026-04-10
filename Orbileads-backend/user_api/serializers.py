@@ -122,6 +122,16 @@ class SignupSerializer(serializers.ModelSerializer):
         )
 
 
+class EmailAvailabilitySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        normalized = User.objects.normalize_email(value).lower().strip()
+        if User.objects.filter(email=normalized).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return normalized
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, trim_whitespace=False, style={'input_type': 'password'})
@@ -233,7 +243,11 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(
-        write_only=True, trim_whitespace=False, style={'input_type': 'password'}
+        write_only=True,
+        trim_whitespace=False,
+        style={'input_type': 'password'},
+        required=False,
+        allow_blank=True,
     )
     new_password = serializers.CharField(write_only=True, trim_whitespace=False, style={'input_type': 'password'})
     confirm_new_password = serializers.CharField(
@@ -242,8 +256,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         user = self.context['request'].user
+        current_password = attrs.get('current_password', '')
 
-        if not user.check_password(attrs['current_password']):
+        if current_password and not user.check_password(current_password):
             raise serializers.ValidationError({'current_password': 'Current password is incorrect.'})
         if attrs['new_password'] != attrs['confirm_new_password']:
             raise serializers.ValidationError({'confirm_new_password': 'Passwords do not match.'})
@@ -253,7 +268,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError({'new_password': list(exc.messages)}) from exc
 
-        if attrs['current_password'] == attrs['new_password']:
+        if current_password and current_password == attrs['new_password']:
             raise serializers.ValidationError(
                 {'new_password': 'New password must be different from the current password.'}
             )

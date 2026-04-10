@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 
 from .serializers import (
     ChangePasswordSerializer,
+    EmailAvailabilitySerializer,
     ForgotPasswordSerializer,
     GoogleAuthSerializer,
     LoginSerializer,
@@ -37,6 +38,19 @@ class SignupView(APIView):
             message='User registered successfully.',
             data=UserProfileSerializer(user).data,
             status_code=status.HTTP_201_CREATED,
+        )
+
+
+class CheckEmailView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [SignupRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        serializer = EmailAvailabilitySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return build_response(
+            success=True,
+            message='Email is available.',
         )
 
 
