@@ -123,15 +123,15 @@ function AppSidebar({ session }: AppSidebarProps) {
       <div className="flex-1" />
 
       <div className="px-0.5 pb-1.5">
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="flex items-start justify-between text-sm">
-            <div>
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
               <p className="text-slate-500">RAM</p>
-              <p className="text-slate-500">Credits</p>
+              <p className="font-medium text-slate-700">0 MB / 8 GB</p>
             </div>
-            <div className="text-right">
-              <p className="font-medium text-slate-800">0 MB / 8 GB</p>
-              <p className="font-medium text-slate-800">$0.50 / $5.00</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-slate-500">Credits</p>
+              <p className="font-medium text-slate-700">$0.50 / $5.00</p>
             </div>
           </div>
         </div>
