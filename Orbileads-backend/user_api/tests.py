@@ -9,6 +9,7 @@ from django.utils.encoding import force_bytes
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
 User = get_user_model()
 
@@ -94,6 +95,49 @@ class UserAuthAPITests(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.token_version, 1)
+
+    def test_logout_blacklists_current_users_refresh_token(self):
+        refresh = RefreshToken.for_user(self.user)
+        refresh['token_version'] = self.user.token_version
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+
+        response = self.client.post(
+            reverse('user-logout'),
+            {'refresh_token': str(refresh)},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            BlacklistedToken.objects.filter(token__jti=refresh['jti']).exists()
+        )
+
+    def test_logout_rejects_refresh_token_from_different_user(self):
+        other_user = User.objects.create_user(
+            email='other@example.com',
+            password='AnotherPassword123!',
+            full_name='Other User',
+            mobile_number='+917777777777',
+            country='India',
+            company_name='Orbileads',
+            accepted_terms=True,
+        )
+        access_refresh = RefreshToken.for_user(self.user)
+        access_refresh['token_version'] = self.user.token_version
+        other_refresh = RefreshToken.for_user(other_user)
+        other_refresh['token_version'] = other_user.token_version
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(access_refresh.access_token)}')
+
+        response = self.client.post(
+            reverse('user-logout'),
+            {'refresh_token': str(other_refresh)},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(
+            BlacklistedToken.objects.filter(token__jti=other_refresh['jti']).exists()
+        )
 
     def test_forgot_password_sends_reset_email(self):
         response = self.client.post(

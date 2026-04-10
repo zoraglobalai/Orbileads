@@ -9,21 +9,27 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env_file = BASE_DIR / '.env'
-if load_dotenv is not None:
-    load_dotenv(env_file)
-elif env_file.exists():
-    # Fallback so local development still works if python-dotenv is not installed.
-    for line in env_file.read_text(encoding='utf-8').splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith('#') or '=' not in stripped:
-            continue
-        key, value = stripped.split('=', 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+env_files = [BASE_DIR / '.env', BASE_DIR / 'user_api' / '.env']
+
+for env_file in env_files:
+    if load_dotenv is not None:
+        load_dotenv(env_file)
+    elif env_file.exists():
+        # Fallback so local development still works if python-dotenv is not installed.
+        for line in env_file.read_text(encoding='utf-8').splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#') or '=' not in stripped:
+                continue
+            key, value = stripped.split('=', 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '*').split(',') if host.strip()]
+
+
+def _parse_csv_env(name):
+    return [value.strip() for value in os.environ.get(name, '').split(',') if value.strip()]
 
 
 # Application definition
@@ -125,9 +131,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user_api.User'
 
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
-CORS_ALLOWED_ORIGINS = [
-    origin.strip() for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
+configured_cors_allowed_origins = _parse_csv_env('CORS_ALLOWED_ORIGINS')
+default_local_cors_origins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
 ]
+CORS_ALLOWED_ORIGINS = configured_cors_allowed_origins or default_local_cors_origins
 CORS_ALLOW_CREDENTIALS = True
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
 FRONTEND_BASE_URL = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:5173').rstrip('/')
