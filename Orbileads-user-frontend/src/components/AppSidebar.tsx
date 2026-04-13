@@ -45,6 +45,15 @@ function AppSidebar({ session }: AppSidebarProps) {
 
   const sidebarItems = [
     {
+      label: 'Store',
+      path: '/store',
+      icon: (
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+          <path d="M4 7.5h12l-.9 8H4.9L4 7.5ZM6.2 7.5V6.4A3.8 3.8 0 0 1 10 2.6a3.8 3.8 0 0 1 3.8 3.8v1.1M7.2 10.3h.01M12.8 10.3h.01" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
       label: 'Dashboard',
       path: '/dashboard',
       icon: (
@@ -92,80 +101,83 @@ function AppSidebar({ session }: AppSidebarProps) {
   ]
 
   return (
-    <aside className="flex w-[236px] shrink-0 flex-col border-r border-slate-200 bg-[#f3f4f6] px-2 py-2 shadow-[inset_-1px_0_0_rgba(148,163,184,0.14)]">
-      <div className="px-1.5 pb-2">
-        <img src="/top_logo.png" alt="Orbileads" className="h-9 w-auto object-contain" />
-      </div>
+    <>
+      <div className="w-[236px] shrink-0" aria-hidden="true" />
+      <aside className="fixed inset-y-0 left-0 z-30 flex w-[236px] flex-col border-r border-slate-200 bg-[#f3f4f6] px-2 py-2 shadow-[inset_-1px_0_0_rgba(148,163,184,0.14)]">
+        <div className="px-1.5 pb-2">
+          <img src="/top_logo.png" alt="Orbileads" className="h-9 w-auto object-contain" />
+        </div>
 
-      <div className="space-y-1 px-0.5">
-        <nav className="space-y-0.5">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => navigate(item.path)}
-              className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left text-[15px] transition ${
-                location.pathname === item.path
-                  ? 'bg-[#e3e7ec] font-medium text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(15,23,42,0.08)]'
-                  : 'text-slate-800 hover:bg-[#e9edf2] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(15,23,42,0.06)]'
-              }`}
-            >
-              <span className="flex h-4 w-4 items-center justify-center text-slate-600">
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
+        <div className="space-y-1 px-0.5">
+          <nav className="space-y-0.5">
+            {sidebarItems.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => navigate(item.path)}
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-1.5 text-left text-[15px] transition ${
+                  location.pathname === item.path
+                    ? 'bg-[#e3e7ec] font-medium text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(15,23,42,0.08)]'
+                    : 'text-slate-800 hover:bg-[#e9edf2] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(15,23,42,0.06)]'
+                }`}
+              >
+                <span className="flex h-4 w-4 items-center justify-center text-slate-600">
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
 
-      </div>
+        </div>
 
-      <div className="flex-1" />
+        <div className="flex-1" />
 
-      <div className="px-0.5 pb-1.5">
-        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-slate-500">RAM</p>
-              <p className="font-medium text-slate-700">0 MB / 8 GB</p>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-slate-500">Credits</p>
-              <p className="font-medium text-slate-700">$0.50 / $5.00</p>
+        <div className="px-0.5 pb-1.5">
+          <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-slate-500">RAM</p>
+                <p className="font-medium text-slate-700">0 MB / 8 GB</p>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-slate-500">Credits</p>
+                <p className="font-medium text-slate-700">$0.50 / $5.00</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div ref={profileMenuRef} className="relative">
-        {isProfileMenuOpen ? (
-          <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <span>Logout</span>
-              <span>{isLoggingOut ? '...' : ''}</span>
-            </button>
-          </div>
-        ) : null}
+        <div ref={profileMenuRef} className="relative">
+          {isProfileMenuOpen ? (
+            <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.12)]">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span>Logout</span>
+                <span>{isLoggingOut ? '...' : ''}</span>
+              </button>
+            </div>
+          ) : null}
 
-        <button
-          type="button"
-          onClick={() => setIsProfileMenuOpen((current) => !current)}
-          className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left transition hover:bg-[#e9edf2] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(15,23,42,0.06)]"
-        >
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1679bd] text-[9px] font-semibold text-white">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold leading-5 text-slate-900">{session.user.full_name}</p>
-          </div>
-        </button>
-      </div>
-    </aside>
+          <button
+            type="button"
+            onClick={() => setIsProfileMenuOpen((current) => !current)}
+            className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left transition hover:bg-[#e9edf2] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_1px_2px_rgba(15,23,42,0.06)]"
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1679bd] text-[9px] font-semibold text-white">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold leading-5 text-slate-900">{session.user.full_name}</p>
+            </div>
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }
 

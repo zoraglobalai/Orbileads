@@ -13,6 +13,9 @@ import RunsPage from './pages/modules/run'
 import LinkMailboxSetupPage from './pages/modules/settings/LinkMailboxSetupPage'
 import SettingsPage from './pages/modules/settings'
 import SignupPage from './pages/SignupPage'
+import StorePlatformPage from './pages/modules/storePlatform'
+import StorePage from './pages/modules/store'
+import StoreToolPage from './pages/modules/storeTool'
 
 function AppShell() {
   const location = useLocation()
@@ -24,6 +27,7 @@ function AppShell() {
     '/dashboard',
     '/actors',
     '/runs',
+    '/store',
     '/integrations',
     '/settings',
   ]
@@ -41,6 +45,9 @@ function AppShell() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/actors" element={<ActorsPage />} />
         <Route path="/runs" element={<RunsPage />} />
+        <Route path="/store" element={<StorePage />} />
+        <Route path="/store/:platformSlug" element={<StorePlatformPage />} />
+        <Route path="/store/:platformSlug/:toolSlug" element={<StoreToolPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/profile" element={<SettingsPage />} />
