@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom'
+
 function MailboxesView() {
+  const navigate = useNavigate()
+
   return (
     <div className="mx-auto max-w-[980px]">
       <section className="rounded-[14px] border border-slate-200 bg-white px-6 py-10 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
@@ -55,6 +59,7 @@ function MailboxesView() {
 
           <button
             type="button"
+            onClick={() => navigate('/settings/mailboxes/link')}
             className="mt-8 rounded-2xl bg-[linear-gradient(135deg,#66a8ff_0%,#1679bd_65%,#0f66a1_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(22,121,189,0.24)] transition hover:bg-[linear-gradient(135deg,#5f9ef1_0%,#126aa5_65%,#0d5a8f_100%)]"
           >
             Link mailbox

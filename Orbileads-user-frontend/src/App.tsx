@@ -10,6 +10,7 @@ import DashboardPage from './pages/modules/dashboard'
 import IntegrationsPage from './pages/modules/integration'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import RunsPage from './pages/modules/run'
+import LinkMailboxSetupPage from './pages/modules/settings/LinkMailboxSetupPage'
 import SettingsPage from './pages/modules/settings'
 import SignupPage from './pages/SignupPage'
 
@@ -19,14 +20,18 @@ function AppShell() {
 
   useEffect(() => subscribeToAuthChanges(() => setSession(readAuthSession())), [])
 
-  const authenticatedShellRoutes = new Set([
+  const authenticatedShellRoutePrefixes = [
     '/dashboard',
     '/actors',
     '/runs',
     '/integrations',
     '/settings',
-  ])
-  const hideNavbar = Boolean(session) && authenticatedShellRoutes.has(location.pathname)
+  ]
+  const hideNavbar =
+    Boolean(session) &&
+    authenticatedShellRoutePrefixes.some((routePrefix) =>
+      location.pathname.startsWith(routePrefix),
+    )
 
   return (
     <div className="min-h-screen bg-[var(--color-app)] text-slate-900">
@@ -38,6 +43,13 @@ function AppShell() {
         <Route path="/runs" element={<RunsPage />} />
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings/profile" element={<SettingsPage />} />
+        <Route path="/settings/profile/:profileTab" element={<SettingsPage />} />
+        <Route path="/settings/mailboxes" element={<SettingsPage />} />
+        <Route path="/settings/notifications" element={<SettingsPage />} />
+        <Route path="/settings/chrome-extension" element={<SettingsPage />} />
+        <Route path="/settings/conversations" element={<SettingsPage />} />
+        <Route path="/settings/mailboxes/link" element={<LinkMailboxSetupPage />} />
         <Route path="/auth/google/callback" element={<GoogleAuthCallbackPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

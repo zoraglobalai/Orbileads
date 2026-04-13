@@ -131,6 +131,10 @@ async function request<T>(path: string, options: RequestInit = {}) {
     throw new ApiError(message, errors)
   }
 
+  if (!payload) {
+    throw new ApiError('Unable to complete the request.')
+  }
+
   return payload
 }
 

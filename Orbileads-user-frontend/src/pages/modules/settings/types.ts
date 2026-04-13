@@ -22,3 +22,10 @@ export type WorkspaceSettingKey =
   | 'Imports and exports'
 
 export type DeliverabilitySuiteItem = 'Overview' | 'Domains' | 'Mailboxes'
+
+export type ProfileTab =
+  | 'General'
+  | 'Multi-factor authentication'
+  | 'Custom fields'
+  | 'Email settings'
+  | 'Conversations'

@@ -1,4 +1,9 @@
-import type { PersonalSettingKey, WorkspaceSettingKey } from './types'
+import type {
+  DeliverabilitySuiteItem,
+  PersonalSettingKey,
+  ProfileTab,
+  WorkspaceSettingKey,
+} from './types'
 
 export const personalSettingsItems: PersonalSettingKey[] = [
   'Profile',
@@ -25,7 +30,11 @@ export const workspaceSettingsItems: WorkspaceSettingKey[] = [
   'Imports and exports',
 ]
 
-export const deliverabilitySuiteItems = ['Overview', 'Domains', 'Mailboxes']
+export const deliverabilitySuiteItems: DeliverabilitySuiteItem[] = [
+  'Overview',
+  'Domains',
+  'Mailboxes',
+]
 export const usersAndTeamsItems = ['Users']
 export const billingAndCreditsItems = [
   'Plan overview',
@@ -50,7 +59,7 @@ export const teamConversationsItems = [
   'Custom field prompts',
 ]
 
-export const profileTabs = [
+export const profileTabs: ProfileTab[] = [
   'General',
   'Multi-factor authentication',
   'Custom fields',

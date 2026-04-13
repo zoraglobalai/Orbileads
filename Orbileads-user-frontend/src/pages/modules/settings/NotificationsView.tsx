@@ -15,7 +15,10 @@ function NotificationsView() {
           </svg>
           <p>Receive notifications directly in Slack to stay on top of Conversations activity.</p>
         </div>
-        <button type="button" className="text-sm font-medium text-[#245da8]">
+        <button
+          type="button"
+          className="cursor-pointer text-sm font-medium text-[#245da8] transition hover:text-[#1a4f94]"
+        >
           Integrate with Slack
         </button>
       </section>
@@ -27,7 +30,14 @@ function NotificationsView() {
         <div className="px-4 py-5">
           <p className="max-w-[860px] text-[14px] leading-7 text-slate-600">
             Select the notifications you want to receive after a data request has been completed in
-            Olbileads. Keep track of your data requests by going to Settings &gt; Data Request History.
+            Olbileads. Keep track of your data requests by going to{' '}
+            <button
+              type="button"
+              className="cursor-pointer font-medium text-[#245da8] transition hover:text-[#1a4f94]"
+            >
+              Settings &gt; Data Request History
+            </button>
+            .
           </p>
 
           <div className="mt-6">

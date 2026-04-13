@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { deliverabilitySuiteItems, profileTabs } from './constants'
 import ChromeExtensionView from './ChromeExtensionView'
 import ConversationsView from './ConversationsView'
@@ -8,18 +8,86 @@ import MailboxesView from './MailboxesView'
 import NotificationsView from './NotificationsView'
 import ProfileView from './ProfileView'
 import SettingsSidebar from './SettingsSidebar'
-import type { DeliverabilitySuiteItem, PersonalSettingKey } from './types'
+import type { DeliverabilitySuiteItem, PersonalSettingKey, ProfileTab } from './types'
 import { readAuthSession, subscribeToAuthChanges, type AuthSession } from '../../../lib/auth'
 
 function SettingsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const getPersonalSettingFromPath = (pathname: string): PersonalSettingKey => {
+    switch (pathname) {
+      case '/settings/mailboxes':
+        return 'Mailboxes'
+      case '/settings/notifications':
+        return 'Notifications'
+      case '/settings/chrome-extension':
+        return 'Chrome extension'
+      case '/settings/conversations':
+        return 'Conversations'
+      default:
+        return 'Profile'
+    }
+  }
+  const getProfileTabFromPath = (pathname: string): ProfileTab => {
+    const profileTabSlug = pathname.replace('/settings/profile', '').replace(/^\//, '')
+
+    switch (profileTabSlug) {
+      case 'multi-factor-authentication':
+        return 'Multi-factor authentication'
+      case 'custom-fields':
+        return 'Custom fields'
+      case 'email-settings':
+        return 'Email settings'
+      case 'conversations':
+        return 'Conversations'
+      default:
+        return 'General'
+    }
+  }
+  const getProfileTabPath = (tab: ProfileTab): string => {
+    switch (tab) {
+      case 'Multi-factor authentication':
+        return '/settings/profile/multi-factor-authentication'
+      case 'Custom fields':
+        return '/settings/profile/custom-fields'
+      case 'Email settings':
+        return '/settings/profile/email-settings'
+      case 'Conversations':
+        return '/settings/profile/conversations'
+      default:
+        return '/settings/profile'
+    }
+  }
+  const getPersonalSettingPath = (item: PersonalSettingKey): string => {
+    switch (item) {
+      case 'Mailboxes':
+        return '/settings/mailboxes'
+      case 'Notifications':
+        return '/settings/notifications'
+      case 'Chrome extension':
+        return '/settings/chrome-extension'
+      case 'Conversations':
+        return '/settings/conversations'
+      default:
+        return '/settings/profile'
+    }
+  }
   const [session, setSession] = useState<AuthSession | null>(() => readAuthSession())
   const [selectedPersonalSetting, setSelectedPersonalSetting] =
-    useState<PersonalSettingKey>('Profile')
+    useState<PersonalSettingKey>(() => getPersonalSettingFromPath(location.pathname))
   const [isDeliverabilitySuiteOpen, setIsDeliverabilitySuiteOpen] = useState(false)
   const [selectedDeliverabilitySuiteItem, setSelectedDeliverabilitySuiteItem] =
     useState<DeliverabilitySuiteItem | null>(null)
+  const [selectedProfileTab, setSelectedProfileTab] = useState<ProfileTab>(() =>
+    getProfileTabFromPath(location.pathname),
+  )
 
   useEffect(() => subscribeToAuthChanges(() => setSession(readAuthSession())), [])
+
+  useEffect(() => {
+    setSelectedPersonalSetting(getPersonalSettingFromPath(location.pathname))
+    setSelectedProfileTab(getProfileTabFromPath(location.pathname))
+  }, [location.pathname])
 
   if (!session) {
     return <Navigate to="/login" replace />
@@ -27,12 +95,23 @@ function SettingsPage() {
 
   const isDeliverabilitySuiteView = selectedDeliverabilitySuiteItem !== null
   const isDomainsView = selectedDeliverabilitySuiteItem === 'Domains'
-  const hideHeaderActions =
+  const isMultiFactorAuthenticationView =
+    selectedPersonalSetting === 'Profile' &&
+    selectedProfileTab === 'Multi-factor authentication' &&
+    !isDeliverabilitySuiteView
+  const hideProfileTabs =
     selectedPersonalSetting === 'Mailboxes' ||
     selectedPersonalSetting === 'Notifications' ||
     selectedPersonalSetting === 'Chrome extension' ||
     selectedPersonalSetting === 'Conversations' ||
     isDeliverabilitySuiteView
+  const hideSaveButton =
+    selectedPersonalSetting === 'Mailboxes' ||
+    selectedPersonalSetting === 'Notifications' ||
+    selectedPersonalSetting === 'Chrome extension' ||
+    selectedPersonalSetting === 'Conversations' ||
+    isDeliverabilitySuiteView ||
+    isMultiFactorAuthenticationView
 
   const pageTitle = isDeliverabilitySuiteView ? 'Deliverability Suite' : selectedPersonalSetting
 
@@ -48,6 +127,10 @@ function SettingsPage() {
           onSelectPersonalSetting={(item) => {
             setSelectedPersonalSetting(item)
             setSelectedDeliverabilitySuiteItem(null)
+            if (item !== 'Profile') {
+              setSelectedProfileTab('General')
+            }
+            navigate(getPersonalSettingPath(item))
           }}
           selectedDeliverabilitySuiteItem={selectedDeliverabilitySuiteItem}
           onSelectDeliverabilitySuiteItem={(item) => {
@@ -87,20 +170,24 @@ function SettingsPage() {
                     <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-slate-950" />
                   </button>
                 </div>
-              ) : !hideHeaderActions ? (
+              ) : !hideProfileTabs ? (
                 <div className="flex flex-wrap gap-4">
-                  {profileTabs.map((tab, index) => (
+                  {profileTabs.map((tab) => (
                     <button
                       key={tab}
                       type="button"
+                      onClick={() => {
+                        setSelectedProfileTab(tab)
+                        navigate(getProfileTabPath(tab))
+                      }}
                       className={`relative pb-2 text-sm transition ${
-                        index === 0
+                        selectedProfileTab === tab
                           ? 'font-semibold text-slate-950'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       {tab}
-                      {index === 0 ? (
+                      {selectedProfileTab === tab ? (
                         <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-slate-950" />
                       ) : null}
                     </button>
@@ -126,7 +213,7 @@ function SettingsPage() {
                   />
                 </svg>
               </button>
-            ) : !hideHeaderActions ? (
+            ) : !hideSaveButton ? (
               <button
                 type="button"
                 className="rounded-2xl bg-[linear-gradient(135deg,#66a8ff_0%,#1679bd_65%,#0f66a1_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(22,121,189,0.24)] transition hover:bg-[linear-gradient(135deg,#5f9ef1_0%,#126aa5_65%,#0d5a8f_100%)]"
@@ -138,12 +225,12 @@ function SettingsPage() {
 
           <div
             className={`flex-1 bg-white px-6 py-4 ${
-              isDomainsView ? 'overflow-hidden' : 'overflow-y-auto'
+              isDomainsView || isMultiFactorAuthenticationView ? 'overflow-hidden' : 'overflow-y-auto'
             }`}
           >
             {selectedDeliverabilitySuiteItem === 'Domains' ? <DeliverabilityDomainsView /> : null}
             {!isDeliverabilitySuiteView && selectedPersonalSetting === 'Profile' ? (
-              <ProfileView session={session} />
+              <ProfileView session={session} selectedTab={selectedProfileTab} />
             ) : null}
             {!isDeliverabilitySuiteView && selectedPersonalSetting === 'Mailboxes' ? (
               <MailboxesView />
